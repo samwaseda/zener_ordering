@@ -1,7 +1,25 @@
 import numpy as np
 from pyiron_base.generic.datacontainer import DataContainer
 from pyiron_atomistics.atomistics.job.interactivewrapper import InteractiveWrapper
-from scipy.spatial import cKDTree
+from pandas import DataFrame
+from pyiron_atomistics import Project as PyironProject
+
+
+class Project(PyironProject):
+    @staticmethod
+    def get_lattice_constant():
+        return 2.855312531
+
+    @staticmethod
+    def get_potential():
+        potential = {}
+        potential['Config'] = [['pair_style eam/alloy\n', 'pair_coeff * * Fe-C-Bec07.eam Fe C\n']]
+        potential['Filename'] = [['/cmmc/u/samsstud/dev_sam/local_projects/zener_ordering/pyiron/Fe-C-Bec07.eam']]
+        potential['Model'] = ['EAM']
+        potential['Name'] = ['Raulot']
+        potential['Species'] = [['Fe', 'C']]
+        potential = DataFrame(potential)
+        return potential
 
 
 class Metadynamics(InteractiveWrapper):
@@ -15,29 +33,33 @@ class Metadynamics(InteractiveWrapper):
         self.input.n_mesh = 1000
         self.input.n_repeat = None
         self.input.use_gradient = True
+        self.input.z_lst = []
         self.output.z_lst = []
         self.gradient = Gradient()
         self._mesh = None
-        self._mesh_tree = None
         self._ind_c = None
         self._ind_fe = None
+        self._n_repeat = None
+
+    @property
+    def n_repeat(self):
+        if self._n_repeat is None:
+            if self.input.n_repeat is None:
+                self._n_repeat = np.rint(0.5 * len(self.ind_fe)).astype(int)
+            else:
+                self._n_repeat = self.input.n_repeat
+        return self._n_repeat
 
     @property
     def mesh(self):
         if self._mesh is None:
             self._mesh, sp = np.linspace(0, 1, self.input.n_mesh, retstep=True, endpoint=False)
             self._mesh += 0.5 * sp
-        return self.mesh
+        return self._mesh
 
     def get_mesh_index(self, z):
-        if self._mesh_tree is None:
-            self._mesh_tree = cKDTree(self.mesh)
-        return self._mesh_tree.query(z)[1]
-
-    def validate_ready_to_run(self):
-        super().validate_ready_to_run()
-        if self.input.n_repeat is None:
-            raise ValueError('repeat not set')
+        index = np.maximum(np.rint(z * self.input.n_mesh).astype(int), 0)
+        return np.minimum(index, self.input.n_mesh - 1)
 
     def run_static(self):
         self.output.B = np.zeros(self.input.n_mesh)
@@ -45,6 +67,8 @@ class Metadynamics(InteractiveWrapper):
         self.output.ddBdds = np.zeros(self.input.n_mesh)
         self.status.running = True
         self.ref_job_initialize()
+        if 'fixpoint' not in self.ref_job.input.control['fix___ensemble']:
+            self.ref_job.input.control['fix___ensemble'] += ' fixedpoint 0 0 0'
         self.ref_job.set_fix_external(self.callback, overload_internal_fix_external=True)
         self.ref_job.run()
         self.status.collect = True
@@ -59,13 +83,13 @@ class Metadynamics(InteractiveWrapper):
     @property
     def ind_fe(self):
         if self._ind_fe is None:
-            self._ind_fe = self.job.structure.select_index('Fe')
+            self._ind_fe = self.ref_job.structure.select_index('Fe')
         return self._ind_fe
 
     @property
     def ind_c(self):
         if self._ind_c is None:
-            self._ind_c = self.job.structure.select_index('C')
+            self._ind_c = self.ref_job.structure.select_index('C')
         return self._ind_c
 
     def callback(self, caller, ntimestep, nlocal, tag, x, fext):
@@ -76,7 +100,7 @@ class Metadynamics(InteractiveWrapper):
         fext[index_c] += ext_forces
         fext[tags[self.ind_fe]] -= np.sum(ext_forces, axis=0) / len(self.ind_fe)
         if ((ntimestep + 1) % self.input.update_every_n_steps) == 0:
-            self.set_s()
+            self.set_s(self.order_parameter)
 
     @property
     def order_parameter(self):
@@ -94,13 +118,13 @@ class Metadynamics(InteractiveWrapper):
     def get_gradient(self, x):
         return self.gradient.get_gradient(x, self.cell)
 
-    def set_s(self):
-        ds = (self.mesh - self.order_parameter) / self.sigma
-        B = self.increment * np.exp(-0.5 * ds**2)
-        self.output.z_lst.append(self.gradient.ord_z)
+    def set_s(self, s):
+        ds = (self.mesh - s) / self.input.sigma
+        B = self.input.increment * np.exp(-0.5 * ds**2)
+        self.output.z_lst.append(s)
         self.output.B += B
-        self.output.dBds -= B * ds / self.sigma
-        self.output.ddBdds += B * (ds**2 - 1) / self.sigma**2
+        self.output.dBds -= B * ds / self.input.sigma
+        self.output.ddBdds += B * (ds**2 - 1) / self.input.sigma**2
 
     def to_hdf(self, hdf=None, group_name=None):
         super().to_hdf(
@@ -135,7 +159,7 @@ class Gradient:
 
     @property
     def E_mat(self):
-        if self.E_mat is None:
+        if self._E_mat is None:
             E = np.ones((3, 3)) - np.eye(3)
             self._E_mat = np.append(
                 E, np.roll(np.eye(3), 1, axis=0) - np.roll(np.eye(3), -1, axis=0), axis=0
