@@ -67,7 +67,7 @@ class Metadynamics(InteractiveWrapper):
         self.output.ddBdds = np.zeros(self.input.n_mesh)
         self.status.running = True
         self.ref_job_initialize()
-        if 'fixpoint' not in self.ref_job.input.control['fix___ensemble']:
+        if 'fixedpoint' not in self.ref_job.input.control['fix___ensemble']:
             self.ref_job.input.control['fix___ensemble'] += ' fixedpoint 0 0 0'
         self.ref_job.set_fix_external(self.callback, overload_internal_fix_external=True)
         self.ref_job.run()
