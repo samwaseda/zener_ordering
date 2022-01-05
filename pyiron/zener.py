@@ -70,6 +70,7 @@ class Metadynamics(InteractiveWrapper):
         if 'fixedpoint' not in self.ref_job.input.control['fix___ensemble']:
             self.ref_job.input.control['fix___ensemble'] += ' fixedpoint 0 0 0'
         self.ref_job.set_fix_external(self.callback, overload_internal_fix_external=True)
+        self.ref_job.input.control['fix_modify___fix_external'] = ' virial no'
         self.ref_job.run()
         self.status.collect = True
         self.ref_job.interactive_close()
@@ -119,9 +120,9 @@ class Metadynamics(InteractiveWrapper):
         return self.gradient.get_gradient(x, self.cell)
 
     def set_s(self, s):
+        self.output.z_lst.append(s)
         ds = (self.mesh - s) / self.input.sigma
         B = self.input.increment * np.exp(-0.5 * ds**2)
-        self.output.z_lst.append(s)
         self.output.B += B
         self.output.dBds -= B * ds / self.input.sigma
         self.output.ddBdds += B * (ds**2 - 1) / self.input.sigma**2
