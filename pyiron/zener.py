@@ -215,7 +215,8 @@ class Gradient:
     @property
     def ord_z(self):
         if self._ord_z is None:
-            self._ord_z = np.sqrt(1.5 * np.sum(self.n_vec**2) / np.sum(self.n_vec)**2 - 0.5)
+            z = 1.5 * np.sum(self.n_vec**2) / np.sum(self.n_vec)**2 - 0.5
+            self._ord_z = np.sqrt(np.minimum(np.maximum(z, 0), 1))
         return self._ord_z
 
     @property
