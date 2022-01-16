@@ -3,6 +3,12 @@ from pyiron_base.generic.datacontainer import DataContainer
 from pyiron_atomistics.atomistics.job.interactivewrapper import InteractiveWrapper
 from pandas import DataFrame
 from pyiron_atomistics import Project as PyironProject
+import random
+
+
+def get_value(x, min_dist, structure):
+    dist_array = structure.get_distances_array(x, x)
+    return np.sum(1 / dist_array[(dist_array > 0) * (dist_array < min_dist)])
 
 
 class Project(PyironProject):
@@ -14,12 +20,44 @@ class Project(PyironProject):
     def get_potential():
         potential = {}
         potential['Config'] = [['pair_style eam/alloy\n', 'pair_coeff * * Fe-C-Bec07.eam Fe C\n']]
-        potential['Filename'] = [['/cmmc/u/samsstud/dev_sam/local_projects/zener_ordering/pyiron/Fe-C-Bec07.eam']]
+        potential['Filename'] = [[
+            '/cmmc/u/samsstud/dev_sam/local_projects/zener_ordering/pyiron/Fe-C-Bec07.eam'
+        ]]
         potential['Model'] = ['EAM']
         potential['Name'] = ['Raulot']
         potential['Species'] = [['Fe', 'C']]
         potential = DataFrame(potential)
         return potential
+
+    def append_carbon(self, structure, c, ordered=True, minimum_dist=1.01, max_iter=1000):
+        a_0 = (structure.get_volume(per_atom=True) * 2)**(1 / 3)
+        min_dist = minimum_dist * a_0
+        x = structure.positions[np.newaxis, :, :] + 0.5 * np.eye(3)[:, np.newaxis, :] * a_0
+        atoms = np.empty(x.shape[:-1], dtype=bool)
+        atoms.fill(False)
+        n_C = np.rint(len(structure.positions) * c / (1 - c) / 3).astype(int)
+        if ordered:
+            atoms[0, :3 * n_C] = True
+        else:
+            atoms[np.arange(3), :n_C] = True
+        current_value = np.inf
+        for iii in range(max_iter):
+            i_x, i_n = random.choice(np.stack(np.where(atoms), axis=-1))
+            j_n = random.choice(np.where(~atoms[i_x])[0])
+            atoms[i_x, i_n] = ~atoms[i_x, i_n]
+            atoms[i_x, j_n] = ~atoms[i_x, j_n]
+            new_value = get_value(x[atoms], min_dist, structure)
+            if current_value < new_value:
+                atoms[i_x, i_n] = ~atoms[i_x, i_n]
+                atoms[i_x, j_n] = ~atoms[i_x, j_n]
+            else:
+                current_value = new_value
+            if current_value == 0:
+                break
+        x = x[atoms]
+        return structure + self.create.structure.atoms(
+            elements=len(x) * ['C'], positions=x, cell=structure.cell
+        )
 
 
 class Metadynamics(InteractiveWrapper):
@@ -45,7 +83,7 @@ class Metadynamics(InteractiveWrapper):
     def n_repeat(self):
         if self._n_repeat is None:
             if self.input.n_repeat is None:
-                self._n_repeat = np.rint(0.5 * len(self.ind_fe)).astype(int)
+                self._n_repeat = np.rint((0.5 * len(self.ind_fe))**(1 / 3)).astype(int)
             else:
                 self._n_repeat = self.input.n_repeat
         return self._n_repeat
@@ -84,13 +122,13 @@ class Metadynamics(InteractiveWrapper):
     @property
     def ind_fe(self):
         if self._ind_fe is None:
-            self._ind_fe = self.ref_job.structure.select_index('Fe')
+            self._ind_fe = self.structure.select_index('Fe')
         return self._ind_fe
 
     @property
     def ind_c(self):
         if self._ind_c is None:
-            self._ind_c = self.ref_job.structure.select_index('C')
+            self._ind_c = self.structure.select_index('C')
         return self._ind_c
 
     def callback(self, caller, ntimestep, nlocal, tag, x, fext):
@@ -176,7 +214,9 @@ class Gradient:
     @property
     def x_rel(self):
         if self._x_rel is None:
-            self._x_rel = np.einsum('ij,ni,pkj->npk', self.x_to_xi_mat, self.x, self.E_mat)
+            self._x_rel = np.einsum(
+                'ij,ni,pkj->npk', self.x_to_xi_mat, self.x, self.E_mat, optimize=True
+            )
         return self._x_rel
 
     @property
@@ -216,7 +256,7 @@ class Gradient:
     def ord_z(self):
         if self._ord_z is None:
             z = 1.5 * np.sum(self.n_vec**2) / np.sum(self.n_vec)**2 - 0.5
-            self._ord_z = np.sqrt(np.minimum(np.maximum(z, 0), 1))
+            self._ord_z = np.sqrt(np.maximum(z, 0))
         return self._ord_z
 
     @property
@@ -225,11 +265,16 @@ class Gradient:
 
     @property
     def gradient(self):
-        n_dash = -np.einsum('pil,api,a->ail', self.E_mat, self.sine, self.inv_cos_sq_sum)
-        n_dash += np.einsum(
-            'aqi,pjl,apj,a->ail', self.cos_sq, self.E_mat, self.sine, self.inv_cos_sq_sum**2
+        n_dash = -np.einsum(
+            'pil,api,a->ail', self.E_mat, self.sine, self.inv_cos_sq_sum, optimize=True
         )
-        return np.einsum('jk,aij,i,->ak', self.x_to_xi_mat, n_dash, self.n_vec, self.safe_z)
+        n_dash += np.einsum(
+            'aqi,pjl,apj,a->ail', self.cos_sq, self.E_mat, self.sine, self.inv_cos_sq_sum**2,
+            optimize=True
+        )
+        return np.einsum(
+            'jk,aij,i,->ak', self.x_to_xi_mat, n_dash, self.n_vec, self.safe_z, optimize=True
+        )
 
     def get_gradient(self, x, cell):
         self.reset()
