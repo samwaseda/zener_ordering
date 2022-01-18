@@ -99,10 +99,16 @@ class Metadynamics(InteractiveWrapper):
         index = np.maximum(np.rint(z * self.input.n_mesh).astype(int), 0)
         return np.minimum(index, self.input.n_mesh - 1)
 
-    def run_static(self):
+    def _initialize_meta(self):
         self.output.B = np.zeros(self.input.n_mesh)
         self.output.dBds = np.zeros(self.input.n_mesh)
         self.output.ddBdds = np.zeros(self.input.n_mesh)
+        if len(self.input.z_lst) > 0:
+            for z in self.input.z_lst:
+                self.set_s(z)
+
+    def run_static(self):
+        self._initialize_meta()
         self.status.running = True
         self.ref_job_initialize()
         if 'fixedpoint' not in self.ref_job.input.control['fix___ensemble']:
