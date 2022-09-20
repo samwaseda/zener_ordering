@@ -1,5 +1,5 @@
 import numpy as np
-from pyiron_base.generic.datacontainer import DataContainer
+from pyiron_base.storage.datacontainer import DataContainer
 from pyiron_atomistics.atomistics.job.interactivewrapper import InteractiveWrapper
 from pandas import DataFrame
 from pyiron_atomistics import Project as PyironProject
@@ -12,10 +12,6 @@ def get_value(x, min_dist, structure):
 
 
 class Project(PyironProject):
-    @staticmethod
-    def get_lattice_constant():
-        return 2.855312531
-
     @staticmethod
     def get_potential():
         potential = {}
