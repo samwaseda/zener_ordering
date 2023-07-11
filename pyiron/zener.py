@@ -27,30 +27,37 @@ class Project(PyironProject):
 
     def append_carbon(self, structure, c, ordered=True, minimum_dist=1.01, max_iter=1000):
         a_0 = (structure.get_volume(per_atom=True) * 2)**(1 / 3)
-        min_dist = minimum_dist * a_0
         x = structure.positions[np.newaxis, :, :] + 0.5 * np.eye(3)[:, np.newaxis, :] * a_0
-        atoms = np.empty(x.shape[:-1], dtype=bool)
-        atoms.fill(False)
         n_C = np.rint(len(structure.positions) * c / (1 - c) / 3).astype(int)
         if ordered:
-            atoms[0, :3 * n_C] = True
+            x = x.reshape(-1, 3)
+            indices = np.isclose(
+                np.cos(
+                    np.pi * np.einsum('ij,nj->ni', np.ones((3, 3)) - np.eye(3), (x - x[0]) / a_0)
+                ).sum(axis=-1),
+                3
+            )
+            x = np.random.permutation(x[indices])[:n_C]
         else:
+            min_dist = minimum_dist * a_0
+            atoms = np.empty(x.shape[:-1], dtype=bool)
+            atoms.fill(False)
             atoms[np.arange(3), :n_C] = True
-        current_value = np.inf
-        for iii in range(max_iter):
-            i_x, i_n = random.choice(np.stack(np.where(atoms), axis=-1))
-            j_n = random.choice(np.where(~atoms[i_x])[0])
-            atoms[i_x, i_n] = ~atoms[i_x, i_n]
-            atoms[i_x, j_n] = ~atoms[i_x, j_n]
-            new_value = get_value(x[atoms], min_dist, structure)
-            if current_value < new_value:
+            current_value = np.inf
+            for iii in range(max_iter):
+                i_x, i_n = random.choice(np.stack(np.where(atoms), axis=-1))
+                j_n = random.choice(np.where(~atoms[i_x])[0])
                 atoms[i_x, i_n] = ~atoms[i_x, i_n]
                 atoms[i_x, j_n] = ~atoms[i_x, j_n]
-            else:
-                current_value = new_value
-            if current_value == 0:
-                break
-        x = x[atoms]
+                new_value = get_value(x[atoms], min_dist, structure)
+                if current_value < new_value:
+                    atoms[i_x, i_n] = ~atoms[i_x, i_n]
+                    atoms[i_x, j_n] = ~atoms[i_x, j_n]
+                else:
+                    current_value = new_value
+                if current_value == 0:
+                    break
+            x = x[atoms]
         return structure + self.create.structure.atoms(
             elements=len(x) * ['C'], positions=x, cell=structure.cell
         )
