@@ -305,7 +305,11 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theory">Theory</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theory">Theory</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#order-parameter-z">Order parameter <span class="math notranslate nohighlight">\(z\)</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#metadynamics">Metadynamics</a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -326,6 +330,8 @@ document.write(`
 </section>
 <section id="theory">
 <h2>Theory<a class="headerlink" href="#theory" title="Permalink to this headline">#</a></h2>
+<section id="order-parameter-z">
+<h3>Order parameter <span class="math notranslate nohighlight">\(z\)</span><a class="headerlink" href="#order-parameter-z" title="Permalink to this headline">#</a></h3>
 <p>Nomenclature:</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(i, j, k, l\)</span>: Coordinate indices</p></li>
@@ -333,11 +339,13 @@ document.write(`
 <li><p><span class="math notranslate nohighlight">\(p\)</span>: Index for 0 and 1</p></li>
 </ul>
 <p>We define the order parameter <span class="math notranslate nohighlight">\(z\)</span> via:</p>
-<div class="math notranslate nohighlight">
-\[z = \sqrt{\frac{3}{2}\frac{\sum_in_i^2}{n_{\mathrm C}^2}-\frac{1}{2}}\]</div>
+<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>z = \sqrt{\frac{3}{2}\frac{\sum_in_i^2}{n_{\mathrm C}^2}-\frac{1}{2}}
+</pre></div>
+</div>
 <p>where <span class="math notranslate nohighlight">\(n_{\mathrm C}\)</span> is the total number of carbon atoms and <span class="math notranslate nohighlight">\(n_i\)</span> is the number of carbon atoms in the sub-lattice <span class="math notranslate nohighlight">\(i\)</span>, which is defined by:</p>
-<div class="math notranslate nohighlight">
-\[n_i = \sum_\alpha\frac{\sum_p \cos^2\left(\sum_kE_{pik}x_{\alpha k}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)}\]</div>
+<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>n_i = \sum_\alpha\frac{\sum_p \cos^2\left(\sum_kE_{pik}x_{\alpha k}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)}
+</pre></div>
+</div>
 <p>where we defined the matrices <span class="math notranslate nohighlight">\(E\)</span> via:</p>
 <div class="highlight-math notranslate"><div class="highlight"><pre><span></span>E_{pij} = \begin{pmatrix} 0 &amp; 1 &amp; (-1)^p \\ (-1)^p &amp; 0 &amp; 1 \\ 1 &amp; (-1)^p &amp; 0 \\\end{pmatrix}
 </pre></div>
@@ -346,6 +354,15 @@ document.write(`
 <div class="highlight-math notranslate"><div class="highlight"><pre><span></span>\frac{\partial z}{\partial x_{\alpha l}}= \frac{3}{2zn_{\mathrm C}^2}\sum_in_i\left(-\frac{\sum_p E_{pil}\sin\left(2\sum_kE_{pik}x_{\alpha k}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)}+\frac{\sum_{pj} E_{pjl}\sin\left(2\sum_kE_{pik}x_{\alpha k}\right)\sum_p\cos^2\left(\sum_kE_{pik}x_{\alpha k}\right)}{\left(\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)\right)^2}\right)
 </pre></div>
 </div>
+<p>This definition of order parameter therefore allows for the calculation of derivatives for each atom.</p>
+</section>
+<section id="metadynamics">
+<h3>Metadynamics<a class="headerlink" href="#metadynamics" title="Permalink to this headline">#</a></h3>
+<p>We define the histogram of metadynamics via:</p>
+<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>B(z) = w\sum_i e^{-\frac{-(z-z_i)^2}{2\sigma^2}}
+</pre></div>
+</div>
+</section>
 </section>
 <div class="toctree-wrapper compound">
 </div>
@@ -410,7 +427,11 @@ document.write(`
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theory">Theory</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theory">Theory</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#order-parameter-z">Order parameter <span class="math notranslate nohighlight">\(z\)</span></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#metadynamics">Metadynamics</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

@@ -8,6 +8,8 @@ Zener ordering is a phenomenon in which carbon atoms in ferrite (bcc Fe) occupy 
 
 ## Theory
 
+### Order parameter $z$
+
 Nomenclature:
 
 - $i, j, k, l$: Coordinate indices
@@ -16,11 +18,16 @@ Nomenclature:
 
 We define the order parameter $z$ via:
 
-$$z = \sqrt{\frac{3}{2}\frac{\sum_in_i^2}{n_{\mathrm C}^2}-\frac{1}{2}}$$ 
+```math
+z = \sqrt{\frac{3}{2}\frac{\sum_in_i^2}{n_{\mathrm C}^2}-\frac{1}{2}}
+```
 
 where $n_{\mathrm C}$ is the total number of carbon atoms and $n_i$ is the number of carbon atoms in the sub-lattice $i$, which is defined by:
 
-$$n_i = \sum_\alpha\frac{\sum_p \cos^2\left(\sum_kE_{pik}x_{\alpha k}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)}$$
+```math
+n_i = \sum_\alpha\frac{\sum_p \cos^2\left(\sum_kE_{pik}x_{\alpha k}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)}
+```
+
 where we defined the matrices $E$ via:
 
 ```math
@@ -33,3 +40,12 @@ The main point is $E$, where it used to have only the first matrix, but this one
 \frac{\partial z}{\partial x_{\alpha l}}= \frac{3}{2zn_{\mathrm C}^2}\sum_in_i\left(-\frac{\sum_p E_{pil}\sin\left(2\sum_kE_{pik}x_{\alpha k}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)}+\frac{\sum_{pj} E_{pjl}\sin\left(2\sum_kE_{pik}x_{\alpha k}\right)\sum_p\cos^2\left(\sum_kE_{pik}x_{\alpha k}\right)}{\left(\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)\right)^2}\right)
 ```
 
+This definition of order parameter therefore allows for the calculation of derivatives for each atom.
+
+### Metadynamics
+
+We define the histogram of metadynamics via:
+
+```math
+B(z) = w\sum_i e^{-\frac{-(z-z_i)^2}{2\sigma^2}}
+```
