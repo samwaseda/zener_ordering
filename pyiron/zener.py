@@ -64,6 +64,23 @@ class Project(PyironProject):
 
 
 class Metadynamics(InteractiveWrapper):
+    """
+    Metadynamics class
+
+    Main inputs:
+
+    - update_every_n_steps (int): After every how many steps to update the
+        metadynamics histogram
+    - sigma (float): Gaussian smearing width of the metadynamics histogram
+    - increment (float): Histogram value change at each update
+    - n_mesh (int): Number of bins
+    - n_repeat (int): Number of repeats in each direction (optional)
+    - use_gradient (bool): Whether to use the gradient values
+    - z_lst (list): Initial values of the descriptor values (optional)
+
+    There is in principle no value that has to be changed. Depending on the
+    setup, it might be important to change the values of `sigma`, `increment` and `n_mesh`
+    """
     def __init__(self, project, job_name):
         super().__init__(project, job_name)
         self.input = DataContainer(table_name='input')
