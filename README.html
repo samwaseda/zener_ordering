@@ -304,6 +304,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theory">Theory</a></li>
 </ul>
             </nav>
@@ -319,19 +320,30 @@ document.write(`
   <section class="tex2jax_ignore mathjax_ignore" id="order-disorder-phase-diagram-of-zener-ordering">
 <h1>Order-disorder phase diagram of Zener ordering<a class="headerlink" href="#order-disorder-phase-diagram-of-zener-ordering" title="Permalink to this headline">#</a></h1>
 <p>This repository contains a workflow that allows the user to study the order-disorder transition phase diagram using metadynamics for varying temperature and carbon concentration.</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">#</a></h2>
+<p>Zener ordering is a phenomenon in which carbon atoms in ferrite (bcc Fe) occupy one of the three sub-lattices of octahedral interstitial sites. It has been first theorized in the middle of the last century, but it has so far not been observed on the microscopic level.</p>
+</section>
 <section id="theory">
 <h2>Theory<a class="headerlink" href="#theory" title="Permalink to this headline">#</a></h2>
+<p>Nomenclature:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(i, j, k, l\)</span>: Coordinate indices</p></li>
+<li><p><span class="math notranslate nohighlight">\(\alpha\)</span>: Enumeration of atoms</p></li>
+<li><p><span class="math notranslate nohighlight">\(p\)</span>: Index for 0 and 1</p></li>
+</ul>
 <p>We define the order parameter <span class="math notranslate nohighlight">\(z\)</span> via:</p>
 <div class="math notranslate nohighlight">
-\[z = \sqrt s = \sqrt{\frac{3}{2}\frac{\sum_in_i^2}{n_{\mathrm C}^2}-\frac{1}{2}}\]</div>
+\[z = \sqrt{\frac{3}{2}\frac{\sum_in_i^2}{n_{\mathrm C}^2}-\frac{1}{2}}\]</div>
+<p>where <span class="math notranslate nohighlight">\(n_{\mathrm C}\)</span> is the total number of carbon atoms and <span class="math notranslate nohighlight">\(n_i\)</span> is the number of carbon atoms in the sub-lattice <span class="math notranslate nohighlight">\(i\)</span>, which is defined by:</p>
 <div class="math notranslate nohighlight">
-\[n_i = \sum_a\frac{\sum_p \cos^2\left(\sum_kE_{pik}x_{ak}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{ak}\right)}\]</div>
+\[n_i = \sum_\alpha\frac{\sum_p \cos^2\left(\sum_kE_{pik}x_{\alpha k}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)}\]</div>
 <p>where we defined the matrices <span class="math notranslate nohighlight">\(E\)</span> via:</p>
 <div class="highlight-math notranslate"><div class="highlight"><pre><span></span>E_{pij} = \begin{pmatrix} 0 &amp; 1 &amp; (-1)^p \\ (-1)^p &amp; 0 &amp; 1 \\ 1 &amp; (-1)^p &amp; 0 \\\end{pmatrix}
 </pre></div>
 </div>
 <p>The main point is <span class="math notranslate nohighlight">\(E\)</span>, where it used to have only the first matrix, but this one was not enough to have a symmetric distribution in non-octahedral sites. For the energy calculation, the gradient is given by:</p>
-<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>\frac{\partial z}{\partial x_{al}}= \frac{3}{2zn_{\mathrm C}^2}\sum_in_i\left(-\frac{\sum_p E_{pil}\sin\left(2\sum_kE_{pik}x_{ak}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{ak}\right)}+\frac{\sum_{pj} E_{pjl}\sin\left(2\sum_kE_{pik}x_{ak}\right)\sum_p\cos^2\left(\sum_kE_{pik}x_{ak}\right)}{\left(\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{ak}\right)\right)^2}\right)
+<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>\frac{\partial z}{\partial x_{\alpha l}}= \frac{3}{2zn_{\mathrm C}^2}\sum_in_i\left(-\frac{\sum_p E_{pil}\sin\left(2\sum_kE_{pik}x_{\alpha k}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)}+\frac{\sum_{pj} E_{pjl}\sin\left(2\sum_kE_{pik}x_{\alpha k}\right)\sum_p\cos^2\left(\sum_kE_{pik}x_{\alpha k}\right)}{\left(\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{\alpha k}\right)\right)^2}\right)
 </pre></div>
 </div>
 </section>
@@ -397,6 +409,7 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#theory">Theory</a></li>
 </ul>
   </nav></div>
