@@ -49,3 +49,35 @@ We define the histogram of metadynamics via:
 ```math
 B(z) = w\sum_i e^{-\frac{-(z-z_i)^2}{2\sigma^2}}
 ```
+
+Therefore, the artificial force acting on the atom $\alpha$ in direction $i$ is given by:
+
+```math
+f_{\alpha i} = \frac{\partial B}{\partial z}\frac{\partial z}{\partial x_{\alpha i}}
+```
+
+## How to use:
+
+```python
+from zener_ordering.pyiron.zener import Metadynamics
+from pyiron_atomistics import Project
+
+
+pr = Project("TEST")
+
+lmp = pr.create.job.Lammps("lmp")
+lmp.structure = structure_of_your_choice
+lmp.potential = potential_of_your_choice
+lmp.calc_md(
+    pressure=[0, 0, 0],
+    temperature=300,
+)
+lmp.interactive_open()
+meta = lmp.create_job(Metadynamics, "meta")
+meta.run()
+```
+
+Notes:
+- The base bcc structure **must** be cubic.
+- Further input parameters related to metadynamics can be found in `meta.input`.
+- There is also a project class in the same python file (i.e. `zener.py`), which also provides the potential used in the publication, as well as an algorithm to distribute carbon atoms.

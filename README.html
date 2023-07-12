@@ -310,6 +310,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#metadynamics">Metadynamics</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use">How to use:</a></li>
 </ul>
             </nav>
         </div>
@@ -362,7 +363,38 @@ document.write(`
 <div class="highlight-math notranslate"><div class="highlight"><pre><span></span>B(z) = w\sum_i e^{-\frac{-(z-z_i)^2}{2\sigma^2}}
 </pre></div>
 </div>
+<p>Therefore, the artificial force acting on the atom <span class="math notranslate nohighlight">\(\alpha\)</span> in direction <span class="math notranslate nohighlight">\(i\)</span> is given by:</p>
+<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>f_{\alpha i} = \frac{\partial B}{\partial z}\frac{\partial z}{\partial x_{\alpha i}}
+</pre></div>
+</div>
 </section>
+</section>
+<section id="how-to-use">
+<h2>How to use:<a class="headerlink" href="#how-to-use" title="Permalink to this headline">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">zener_ordering.pyiron.zener</span> <span class="kn">import</span> <span class="n">Metadynamics</span>
+<span class="kn">from</span> <span class="nn">pyiron_atomistics</span> <span class="kn">import</span> <span class="n">Project</span>
+
+
+<span class="n">pr</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="s2">&quot;TEST&quot;</span><span class="p">)</span>
+
+<span class="n">lmp</span> <span class="o">=</span> <span class="n">pr</span><span class="o">.</span><span class="n">create</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">Lammps</span><span class="p">(</span><span class="s2">&quot;lmp&quot;</span><span class="p">)</span>
+<span class="n">lmp</span><span class="o">.</span><span class="n">structure</span> <span class="o">=</span> <span class="n">structure_of_your_choice</span>
+<span class="n">lmp</span><span class="o">.</span><span class="n">potential</span> <span class="o">=</span> <span class="n">potential_of_your_choice</span>
+<span class="n">lmp</span><span class="o">.</span><span class="n">calc_md</span><span class="p">(</span>
+    <span class="n">pressure</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">lmp</span><span class="o">.</span><span class="n">interactive_open</span><span class="p">()</span>
+<span class="n">meta</span> <span class="o">=</span> <span class="n">lmp</span><span class="o">.</span><span class="n">create_job</span><span class="p">(</span><span class="n">Metadynamics</span><span class="p">,</span> <span class="s2">&quot;meta&quot;</span><span class="p">)</span>
+<span class="n">meta</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>The base bcc structure <strong>must</strong> be cubic.</p></li>
+<li><p>Further input parameters related to metadynamics can be found in <code class="docutils literal notranslate"><span class="pre">meta.input</span></code>.</p></li>
+<li><p>There is also a project class in the same python file (i.e. <code class="docutils literal notranslate"><span class="pre">zener.py</span></code>), which also provides the potential used in the publication, as well as an algorithm to distribute carbon atoms.</p></li>
+</ul>
 </section>
 <div class="toctree-wrapper compound">
 </div>
@@ -432,6 +464,7 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#metadynamics">Metadynamics</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use">How to use:</a></li>
 </ul>
   </nav></div>
 
