@@ -327,13 +327,13 @@ document.write(`
 <div class="math notranslate nohighlight">
 \[n_i = \sum_a\frac{\sum_p \cos^2\left(\sum_kE_{pik}x_{ak}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{ak}\right)}\]</div>
 <p>where we defined the matrices <span class="math notranslate nohighlight">\(E\)</span> via:</p>
-<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>E_{kij} = \begin{pmatrix} 0 &amp; 1 &amp; (-1)^k \\ (-1)^k &amp; 0 &amp; 1 \\ 1 &amp; (-1)^k &amp; 0 \\\end{pmatrix}
+<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>E_{pij} = \begin{pmatrix} 0 &amp; 1 &amp; (-1)^p \\ (-1)^p &amp; 0 &amp; 1 \\ 1 &amp; (-1)^p &amp; 0 \\\end{pmatrix}
 </pre></div>
 </div>
 <p>The main point is <span class="math notranslate nohighlight">\(E\)</span>, where it used to have only the first matrix, but this one was not enough to have a symmetric distribution in non-octahedral sites. For the energy calculation, the gradient is given by:</p>
-<div class="math notranslate nohighlight">
-\[\frac{\partial z}{\partial x_{al}}= \frac{3}{2zn_{\mathrm C}^2}\sum_in_i\left(-\frac{\sum_p E_{pil}\sin\left(2\sum_kE_{pik}x_{ak}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{ak}\right)}+\frac{\sum_{pj} E_{pjl}\sin\left(2\sum_kE_{pik}x_{ak}\right)\sum_p\cos^2\left(\sum_kE_{pik}x_{ak}\right)}{\left(\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{ak}\right)\right)^2}\right)\]</div>
-<p>\end{document}</p>
+<div class="highlight-math notranslate"><div class="highlight"><pre><span></span>\frac{\partial z}{\partial x_{al}}= \frac{3}{2zn_{\mathrm C}^2}\sum_in_i\left(-\frac{\sum_p E_{pil}\sin\left(2\sum_kE_{pik}x_{ak}\right)}{\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{ak}\right)}+\frac{\sum_{pj} E_{pjl}\sin\left(2\sum_kE_{pik}x_{ak}\right)\sum_p\cos^2\left(\sum_kE_{pik}x_{ak}\right)}{\left(\sum_{pj} \cos^2\left(\sum_kE_{pjk}x_{ak}\right)\right)^2}\right)
+</pre></div>
+</div>
 </section>
 <div class="toctree-wrapper compound">
 </div>
