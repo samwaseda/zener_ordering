@@ -6,6 +6,41 @@ from pyiron_atomistics import Project as PyironProject
 import random
 
 
+def get_potential():
+    potential = {}
+    potential['Config'] = [['pair_style eam/alloy\n', 'pair_coeff * * Fe-C-Bec07.eam Fe C\n']]
+    potential['Filename'] = [[
+        '/cmmc/u/samsstud/dev_sam/local_projects/zener_ordering/pyiron/Fe-C-Bec07.eam'
+    ]]
+    potential['Model'] = ['EAM']
+    potential['Name'] = ['Raulot']
+    potential['Species'] = [['Fe', 'C']]
+    potential = DataFrame(potential)
+    return potential
+
+
+def get_job(
+    pr, structure, job_name=None, temperature=None, pressure=None, drag_fix_id=None, run=True, n_ionic_steps=1e5,
+):
+    job_name = 'lmp_' + sha1(
+        (structure.__repr__() + str(temperature) + str(pressure) + str(drag_fix_id) + str(job_name)).encode()
+    ).hexdigest()
+    lmp = pr.create.job.Lammps(job_name)
+    lmp.potential = get_potential()
+    lmp.structure = structure
+    if temperature is not None:
+        if temperature == 0:
+            lmp.calc_minimize(pressure=pressure, n_ionic_steps=n_ionic_steps)
+        else:
+            lmp.calc_md(pressure=pressure, n_ionic_steps=n_ionic_steps)
+    if drag_fix_id is not None:
+        setup_lmp_input(lmp, drag_fix_id)
+    if lmp.status.initialized and run:
+        lmp.run()
+    return lmp
+
+
+
 def get_value(x, min_dist, structure):
     dist_array = structure.get_distances_array(x, x)
     return np.sum(1 / dist_array[(dist_array > 0) * (dist_array < min_dist)])
@@ -14,16 +49,21 @@ def get_value(x, min_dist, structure):
 class Project(PyironProject):
     @staticmethod
     def get_potential():
-        potential = {}
-        potential['Config'] = [['pair_style eam/alloy\n', 'pair_coeff * * Fe-C-Bec07.eam Fe C\n']]
-        potential['Filename'] = [[
-            '/cmmc/u/samsstud/dev_sam/local_projects/zener_ordering/pyiron/Fe-C-Bec07.eam'
-        ]]
-        potential['Model'] = ['EAM']
-        potential['Name'] = ['Raulot']
-        potential['Species'] = [['Fe', 'C']]
-        potential = DataFrame(potential)
-        return potential
+        get_potential()
+    
+    def get_job(
+        self, structure, job_name=None, temperature=None, pressure=None, drag_fix_id=None, run=True, n_ionic_steps=1e5
+    ):
+        return get_job(
+            pr=self,
+            structure=structure,
+            job_name=job_name,
+            temperature=temperature,
+            n_ionic_steps=n_ionic_steps,
+            pressure=pressure,
+            drag_fix_id=drag_fix_id,
+            run=run
+        )
 
     def append_carbon(self, structure, c, ordered=True, minimum_dist=1.01, max_iter=1000):
         a_0 = (structure.get_volume(per_atom=True) * 2)**(1 / 3)
