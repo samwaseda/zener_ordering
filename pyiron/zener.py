@@ -4,6 +4,7 @@ from pyiron_atomistics.atomistics.job.interactivewrapper import InteractiveWrapp
 from pandas import DataFrame
 from pyiron_atomistics import Project as PyironProject
 import random
+from hashlib import sha1
 
 
 def get_potential():
@@ -19,20 +20,43 @@ def get_potential():
     return potential
 
 
+def get_lattice_coeff(temperature):
+    coeff = np.array([-3.16238463e-12,  2.06828703e-08,  1.00738345e-05,  2.85520935e+00])
+    return np.polyval(coeff, temperature)
+
+
 def get_job(
-    pr, structure, job_name=None, temperature=None, pressure=None, drag_fix_id=None, run=True, n_ionic_steps=1e5,
+    pr,
+    structure,
+    job_name=None,
+    temperature=None,
+    pressure=None,
+    drag_fix_id=None,
+    run=True,
+    n_ionic_steps=1e5,
 ):
     job_name = 'lmp_' + sha1(
-        (structure.__repr__() + str(temperature) + str(pressure) + str(drag_fix_id) + str(job_name)).encode()
+        (
+            structure.__repr__()
+            + str(temperature)
+            + str(pressure)
+            + str(drag_fix_id)
+            + str(job_name)
+            + str(n_ionic_steps)
+        ).encode()
     ).hexdigest()
     lmp = pr.create.job.Lammps(job_name)
+    if lmp.status.finished:
+        return lmp
     lmp.potential = get_potential()
     lmp.structure = structure
     if temperature is not None:
         if temperature == 0:
-            lmp.calc_minimize(pressure=pressure, n_ionic_steps=n_ionic_steps)
+            lmp.calc_minimize(
+                pressure=pressure, max_iter=n_ionic_steps, n_print=int(n_ionic_steps / 10)
+            )
         else:
-            lmp.calc_md(pressure=pressure, n_ionic_steps=n_ionic_steps)
+            lmp.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps)
     if drag_fix_id is not None:
         setup_lmp_input(lmp, drag_fix_id)
     if lmp.status.initialized and run:
@@ -49,7 +73,7 @@ def get_value(x, min_dist, structure):
 class Project(PyironProject):
     @staticmethod
     def get_potential():
-        get_potential()
+        return get_potential()
     
     def get_job(
         self, structure, job_name=None, temperature=None, pressure=None, drag_fix_id=None, run=True, n_ionic_steps=1e5
@@ -63,6 +87,21 @@ class Project(PyironProject):
             pressure=pressure,
             drag_fix_id=drag_fix_id,
             run=run
+        )
+
+    @staticmethod
+    def get_lattice_coeff(temperature):
+        return get_lattice_coeff(temperature)
+
+    def get_bulk(self, temperature=0, cubic=True):
+        return self.create.structure.bulk('Fe', cubic=cubic, a=get_lattice_coeff(temperature))
+
+    def add_carbon(self, positions, repeat, temperature=0, cubic=True):
+        bulk = self.get_bulk(temperature=temperature, cubic=cubic)
+        x = np.einsum("nj,ji->ni", np.array(positions).reshape(-1, 3), bulk.cell)
+        structure = bulk.repeat(repeat)
+        return structure + self.create.structure.atoms(
+            elements=len(x) * ['C'], positions=x, cell=structure.cell, pbc=structure.pbc
         )
 
     def append_carbon(self, structure, c, ordered=True, minimum_dist=1.01, max_iter=1000):
