@@ -107,7 +107,7 @@ class Project(PyironProject):
     def append_carbon(self, structure, c, ordered=True, minimum_dist=1.01, max_iter=1000):
         a_0 = (structure.get_volume(per_atom=True) * 2)**(1 / 3)
         x = structure.positions[np.newaxis, :, :] + 0.5 * np.eye(3)[:, np.newaxis, :] * a_0
-        n_C = np.rint(len(structure.positions) * c / (1 - c) / 3).astype(int)
+        n_C = np.rint(len(structure.positions) * c / (1 - c)).astype(int)
         if ordered:
             x = x.reshape(-1, 3)
             indices = np.isclose(
@@ -121,7 +121,7 @@ class Project(PyironProject):
             min_dist = minimum_dist * a_0
             atoms = np.empty(x.shape[:-1], dtype=bool)
             atoms.fill(False)
-            atoms[np.arange(3), :n_C] = True
+            atoms[np.arange(3), :np.round(n_C / 3).astype(int)] = True
             current_value = np.inf
             for iii in range(max_iter):
                 i_x, i_n = random.choice(np.stack(np.where(atoms), axis=-1))
