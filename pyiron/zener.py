@@ -11,7 +11,7 @@ def get_potential():
     potential = {}
     potential['Config'] = [['pair_style eam/alloy\n', 'pair_coeff * * Fe-C-Bec07.eam Fe C\n']]
     potential['Filename'] = [[
-        '/cmmc/u/samsstud/dev_sam/local_projects/zener_ordering/pyiron/Fe-C-Bec07.eam'
+        '/home/jovyan/dev/local_projects/zener_ordering/pyiron/Fe-C-Bec07.eam'
     ]]
     potential['Model'] = ['EAM']
     potential['Name'] = ['Raulot']
@@ -25,6 +25,10 @@ def get_lattice_coeff(temperature):
     return np.polyval(coeff, temperature)
 
 
+def get_bulk(pr, temperature=0, cubic=True):
+    return pr.create.structure.bulk('Fe', cubic=cubic, a=get_lattice_coeff(temperature))
+
+
 def get_job(
     pr,
     structure,
@@ -33,6 +37,7 @@ def get_job(
     pressure=None,
     drag_fix_id=None,
     run=True,
+    non_modal=False,
     n_ionic_steps=1e5,
 ):
     job_name = 'lmp_' + sha1(
@@ -59,9 +64,22 @@ def get_job(
             lmp.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps)
     if drag_fix_id is not None:
         setup_lmp_input(lmp, drag_fix_id)
+    if non_modal:
+        lmp.server.run_mode.non_modal = True
     if lmp.status.initialized and run:
         lmp.run()
     return lmp
+
+
+def get_elastic_tensor(pr):
+    lmp = get_job(
+        pr=pr, structure=get_bulk(pr=pr), job_name="elast", run=False
+    )
+    lmp.interactive_open()
+    elast = lmp.create_job("ElasticTensor", "elast")
+    if elast.status.initialized:
+        elast.run()
+    return elast["output/elastic_tensor"]
 
 
 
@@ -76,7 +94,15 @@ class Project(PyironProject):
         return get_potential()
     
     def get_job(
-        self, structure, job_name=None, temperature=None, pressure=None, drag_fix_id=None, run=True, n_ionic_steps=1e5
+        self,
+        structure,
+        job_name=None,
+        temperature=None,
+        pressure=None,
+        drag_fix_id=None,
+        run=True,
+        n_ionic_steps=1e5,
+        non_modal=False
     ):
         return get_job(
             pr=self,
@@ -86,7 +112,8 @@ class Project(PyironProject):
             n_ionic_steps=n_ionic_steps,
             pressure=pressure,
             drag_fix_id=drag_fix_id,
-            run=run
+            run=run,
+            non_modal=non_modal
         )
 
     @staticmethod
@@ -94,11 +121,14 @@ class Project(PyironProject):
         return get_lattice_coeff(temperature)
 
     def get_bulk(self, temperature=0, cubic=True):
-        return self.create.structure.bulk('Fe', cubic=cubic, a=get_lattice_coeff(temperature))
+        return get_bulk(pr=self, temperature=temperature, cubic=cubic)
 
-    def add_carbon(self, positions, repeat, temperature=0, cubic=True):
+    def add_carbon(self, positions, repeat, temperature=0, cubic=True, relative=True):
         bulk = self.get_bulk(temperature=temperature, cubic=cubic)
-        x = np.einsum("nj,ji->ni", np.array(positions).reshape(-1, 3), bulk.cell)
+        if relative:
+            x = np.einsum("nj,ji->ni", np.array(positions).reshape(-1, 3), bulk.cell)
+        else:
+            x = positions
         structure = bulk.repeat(repeat)
         return structure + self.create.structure.atoms(
             elements=len(x) * ['C'], positions=x, cell=structure.cell, pbc=structure.pbc
